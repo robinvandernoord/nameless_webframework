@@ -22,3 +22,4 @@ Use the config to tweak some settings or make your own.
 - Better usage examples
     - possible expose options
 - replace 1th with 1st
+- use only the first part of path (e.g. /movie/joker)

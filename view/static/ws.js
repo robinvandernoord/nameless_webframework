@@ -11,6 +11,7 @@ if (LOG) {
 }
 
 function start_conn(e, iteration) {
+    log('welcome');
     if (!iteration) {
         iteration = 1;
     }
@@ -64,13 +65,41 @@ let sock = null;
 
 window.onload = start_conn;
 
+let callbacks = {};
+
+function promise_ws(return_id) {
+    return new Promise(function (resolve, reject) {
+        // executor (the producing code, "singer")
+        let i = 0;
+        const int = setInterval(function () {
+            if (callbacks[return_id]) {
+                clearInterval(int);
+                return resolve(callbacks[return_id])
+            } else {
+                i++;
+                if(i > 200){
+                    clearInterval(int);
+                    return reject('timeout')
+                }
+            }
+        }, 100);
+    });
+}
+
 function send(msg) {
+    let guid = undefined;
+    if (typeof msg == 'object') {
+        guid = Date.now();
+        msg['return'] = guid;
+        callbacks[guid] = 0;
+    }
     if (typeof msg != 'string') {
         msg = JSON.stringify(msg)
     }
     if (sock) {
         sock.send(msg);
         log("Sent " + msg);
+        return guid ? promise_ws(guid) : null;
     } else {
         log("Not connected. (retrying now)");
         start_conn(null, 1);
@@ -104,11 +133,16 @@ function handle(data) {
     let response;
     try {
         response = JSON.parse(data);
+        if (response['return'] && callbacks[response['return']] === 0) {
+            callbacks[response['return']] = response;
+        }
     } catch (e) {
         throw data;
     }
     if (response && response['function'] && functions[response['function']]) {
         return functions[response['function']](response.data)
+    } else {
+        log(response)
     }
 }
 
@@ -136,9 +170,9 @@ const _handler_func = {
     },
 };
 
-const python = new Proxy(()=>0, _handler_func);
+const python = new Proxy(() => 0, _handler_func);
 
-function update(){
+function update() {
     window.location.reload();
 }
 
