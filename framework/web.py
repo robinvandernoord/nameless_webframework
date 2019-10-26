@@ -5,7 +5,6 @@ from twisted.web.static import File
 from jinja2 import Environment, FileSystemLoader
 from .config import encode
 
-
 __all__ = ['expose_static', 'expose_web', 'expose_template', 'root']
 
 
@@ -16,6 +15,7 @@ def HTTP_CODE(code, message='', request=None):
 
 
 # we server static files under "/view"
+
 root = File("view")
 
 
@@ -39,7 +39,6 @@ def expose_static(*method):
             root.putChild(alias.encode(), TriggerFile(f, f'view/{name}.html'))
 
     return wrapper
-
 
 
 class Template(Resource):
@@ -95,7 +94,7 @@ def expose_web(*method):
         def inner_wrapper(*a, **kw):
             f(*a, **kw)
 
-        request_method = method[0]
+        request_method = method[0].lower() if method else 'get'
         if request_method == 'post':
             _add_page(root, f.__name__, function_post=f)
         elif request_method == 'get':
