@@ -21,3 +21,4 @@ Use the config to tweak some settings or make your own.
 - Store data per connected peer
 - More HTTP methods (currently only GET and POST are allowed)
 - Better usage examples
+- replace 1th with 1st

@@ -4,4 +4,4 @@ function some_func(data) {
     log(data);
 }
 
-expose_function(some_func());
+expose_function(some_func);
