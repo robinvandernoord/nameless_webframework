@@ -2,9 +2,11 @@
 
 from twisted.web.resource import Resource
 from twisted.web.static import File
+from jinja2 import Environment, FileSystemLoader
 from .config import encode
 
-__all__ = ['expose_static', 'expose_web', 'root']
+
+__all__ = ['expose_static', 'expose_web', 'expose_template', 'root']
 
 
 def HTTP_CODE(code, message='', request=None):
@@ -20,10 +22,10 @@ root = File("view")
 class TriggerFile(File):
     def __init__(self, trigger_func, *a, **kw):
         self.trigger_func = trigger_func
-        super(TriggerFile, self).__init__(*a, **kw)
+        super().__init__(*a, **kw)
 
     def render(self, *a, **kw):
-        res = super(TriggerFile, self).render(*a, **kw)
+        res = super().render(*a, **kw)
         self.trigger_func(*a, **kw)
         return res
 
@@ -35,6 +37,33 @@ def expose_static(*method):
         if method:
             alias = method[0]
             root.putChild(alias.encode(), TriggerFile(f, f'view/{name}.html'))
+
+    return wrapper
+
+
+
+class Template(Resource):
+    def __init__(self, template, func):
+        super().__init__()
+        self.template = template
+        self.function = func
+
+    def render(self, request):
+        ctx = self.function(request)
+        env = Environment(loader=FileSystemLoader('view'))
+        template = env.get_template(f'{self.template}.html')
+        output_from_parsed_template = template.render(**ctx)
+        return encode(output_from_parsed_template)
+
+
+def expose_template(template=None):
+    def wrapper(f):
+        if template:
+            tmpl = template
+        else:
+            tmpl = f.__name__
+        t = Template(tmpl, f)
+        root.putChild(f.__name__.encode(), t)
 
     return wrapper
 

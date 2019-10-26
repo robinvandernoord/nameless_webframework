@@ -2,7 +2,7 @@
 
 
 from framework.config import config
-from framework.web import expose_web, expose_static
+from framework.web import expose_web, expose_static, expose_template
 
 
 # beta will be an alias for index, index.html will be rendered

@@ -17,10 +17,8 @@ Use the config to tweak some settings or make your own.
 - Expose static pages
 
 ### TODO
-- Implement templating
-    - to make static pages less static
-    - to 'include' generic page
 - Store data per connected peer
 - More HTTP methods (currently only GET and POST are allowed)
 - Better usage examples
+    - possible expose options
 - replace 1th with 1st
