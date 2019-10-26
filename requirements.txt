@@ -4,3 +4,4 @@ requests
 pyopenssl
 service_identity
 pyyaml
+jinja2
