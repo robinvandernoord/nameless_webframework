@@ -1,0 +1,6 @@
+twisted
+autobahn
+requests
+pyopenssl
+service_identity
+pyyaml

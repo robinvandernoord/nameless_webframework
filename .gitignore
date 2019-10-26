@@ -1,0 +1,7 @@
+.idea
+config.yaml
+venv
+__pycache__/*
+*.bak
+*.pyc
+keys
