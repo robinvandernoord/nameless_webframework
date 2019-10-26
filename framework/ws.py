@@ -1,6 +1,6 @@
 # functions for exposing websocket endpoints
 
-from autobahn.twisted.websocket import WebSocketServerFactory, WebSocketServerProtocol
+from autobahn.twisted.websocket import WebSocketServerProtocol
 from .config import encode
 import json
 
