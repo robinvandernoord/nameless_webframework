@@ -2,8 +2,10 @@
 
 from framework.expose import websocket
 
-
 # exposed at 'func'
+from framework.ws import functions
+
+
 @websocket
 def func(server, *args):
     print('Func called with', args)
@@ -19,6 +21,24 @@ def func(server, *args):
 def log(server, *args):
     print(*args)
     return {}
+
+
+@websocket
+def list_of_data(server, *args):
+    return [1, 2, 31, 4, 6]
+
+
+@websocket
+def string(server, *args):
+    """
+    Return a random string
+    """
+    return "something"
+
+
+@websocket
+def query_functions(server, *args):
+    return {name: method.__doc__ for name, method in functions.items()}
 
 
 # exposed at 'update_all'

@@ -57,8 +57,6 @@ def expose_static(alias=None, template=True):
             else:
                 where = name
 
-            print(template, name, where)
-
             if template:
                 contents = Template(filename, func)
             else:

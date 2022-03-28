@@ -42,6 +42,8 @@ function start_conn(e, iteration) {
         sock.onopen = function () {
             log("Connected to " + wsuri);
             log(`(for the ${iteration}th time)`);
+
+            python._update_method_list();
         };
 
         sock.onmessage = function (e) {
@@ -72,7 +74,7 @@ function promise_ws(return_id) {
         // executor (the producing code, "singer")
         let i = 0;
         const int = setInterval(function () {
-            if (callbacks[return_id]) {
+            if (return_id in callbacks) {
                 clearInterval(int);
                 return resolve(callbacks[return_id]);
             } else {
@@ -133,29 +135,22 @@ function handle(data) {
     let response;
     try {
         response = JSON.parse(data);
+
         if (response['return'] && callbacks[response['return']] === 0) {
-            callbacks[response['return']] = response;
+            callbacks[response['return']] = response.data ?? response;
         }
     } catch (e) {
         throw data;
     }
+
     if (response && response['function'] && functions[response['function']]) {
         return functions[response['function']](response.data);
-    } else {
-        log("response: " + JSON.stringify(response));
-        console.log(functions, response['function'])
     }
 }
 
 
 if (LOG) {
     document.querySelector('#log').style.display = null;
-}
-
-class Python {
-    constructor(value, handler) {
-        this.__proto__.__proto__ = new Proxy(value, handler);
-    }
 }
 
 const _handler_func = {
@@ -175,12 +170,29 @@ const _handler_func = {
         }
     },
 
-    set() {
-        throw "Can not set properties on server!";
-    }
+    // set() {
+    //     throw "Can not set properties on server!";
+    // }
 };
 
-const python = new Python(() => 0, _handler_func);
+
+class Python {
+    _methods;
+    _proxy;
+
+    constructor(value, handler) {
+        this._proxy = this.__proto__.__proto__ = new Proxy(value, handler);
+    }
+
+    async _update_method_list() {
+        this._methods = await this.query_functions();
+        for (let method in this._methods) {
+            this[method] = (...data) => send({'function': method, data});
+        }
+    }
+}
+
+const python = new Python(_ => 0, _handler_func);
 
 function update() {
     window.location.reload();

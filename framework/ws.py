@@ -51,8 +51,16 @@ class Server(WebSocketServerProtocol):
         payload = self.payload_to_dict(payload)
         function = functions.get(payload.get('function', None), self.default_func)
         result = function(self, payload.get('data', {}))
-        if isinstance(result, dict) and payload.get('return'):
-            result['return'] = payload['return']
+        if payload.get('return'):
+            # add 'return' token to response:
+            if isinstance(result, dict):
+                result['return'] = payload['return']
+            else:
+                result = {
+                    'return': payload['return'],
+                    'data': result,
+                }
+
         return encode(result)
 
     def onConnect(self, request):
