@@ -10,10 +10,11 @@ __all__ = ['expose_ws', 'peers', 'Server', "js"]
 peers, functions = {}, {}
 
 
-def expose_ws(*command):
+def expose_ws(command=None):
     def wrapper(f):
-        if command:
-            cmd = command[0]
+
+        if command and not callable(command):
+            cmd = command
         else:
             cmd = f.__name__
 
@@ -23,7 +24,10 @@ def expose_ws(*command):
         functions[cmd] = f
         return inner_wrapper
 
-    return wrapper
+    if callable(command):
+        return wrapper(command)
+    else:
+        return wrapper
 
 
 class Server(WebSocketServerProtocol):

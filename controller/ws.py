@@ -1,10 +1,10 @@
 # EXAMPLE endpoints for WS
 
-from framework.ws import expose_ws
+from framework.expose import websocket
 
 
 # exposed at 'func'
-@expose_ws()
+@websocket
 def func(server, *args):
     print('Func called with', args)
     server.js.some_func('hi')
@@ -15,8 +15,14 @@ def func(server, *args):
     # return {'function': 'some_js_func', 'data': 'bye'}
 
 
+@websocket()
+def log(server, *args):
+    print(*args)
+    return {}
+
+
 # exposed at 'update_all'
-@expose_ws('update_all')
+@websocket('update_all')
 def push_update(server, *a):
     # send an action to all connected peers
     for peer_code, peer in server.peers:
