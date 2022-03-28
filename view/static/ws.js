@@ -74,12 +74,12 @@ function promise_ws(return_id) {
         const int = setInterval(function () {
             if (callbacks[return_id]) {
                 clearInterval(int);
-                return resolve(callbacks[return_id])
+                return resolve(callbacks[return_id]);
             } else {
                 i++;
-                if(i > 200){
+                if (i > 200) {
                     clearInterval(int);
-                    return reject('timeout')
+                    return reject('timeout');
                 }
             }
         }, 100);
@@ -94,7 +94,7 @@ function send(msg) {
         callbacks[guid] = 0;
     }
     if (typeof msg != 'string') {
-        msg = JSON.stringify(msg)
+        msg = JSON.stringify(msg);
     }
     if (sock) {
         sock.send(msg);
@@ -104,8 +104,8 @@ function send(msg) {
         log("Not connected. (retrying now)");
         start_conn(null, 1);
         setTimeout(function () {
-            send(msg)
-        }, TIMEOUT_WAIT)
+            send(msg);
+        }, TIMEOUT_WAIT);
     }
 }
 
@@ -118,7 +118,7 @@ function log(m) {
         ellog.innerHTML += m + '\n';
         ellog.scrollTop = ellog.scrollHeight;
     }
-    console.info(m)
+    console.info(m);
 }
 
 
@@ -126,7 +126,7 @@ function log(m) {
 let functions = {};
 
 function expose_function(f) {
-    functions[f.name] = f
+    functions[f.name] = f;
 }
 
 function handle(data) {
@@ -140,21 +140,27 @@ function handle(data) {
         throw data;
     }
     if (response && response['function'] && functions[response['function']]) {
-        return functions[response['function']](response.data)
+        return functions[response['function']](response.data);
     } else {
-        log(response)
+        log("response: " + JSON.stringify(response));
+        console.log(functions, response['function'])
     }
 }
 
 
 if (LOG) {
-    document.querySelector('#log').style.display = null
+    document.querySelector('#log').style.display = null;
 }
 
+class Python {
+    constructor(value, handler) {
+        this.__proto__.__proto__ = new Proxy(value, handler);
+    }
+}
 
 const _handler_func = {
     apply(_, __, args) {
-        let result = send({'function': this._python_func, 'data': args})
+        let result = send({'function': this._python_func, 'data': args});
         this._python_func = null;
         return result;
     },
@@ -162,15 +168,19 @@ const _handler_func = {
         // f is just there to placehold the function class
         if (python_func.startsWith('_')) {
             // internal function, use regular get
-            return this[python_func]
+            return this[python_func];
         } else {
             this._python_func = python_func;
             return new Proxy(f, _handler_func);
         }
     },
+
+    set() {
+        throw "Can not set properties on server!";
+    }
 };
 
-const python = new Proxy(() => 0, _handler_func);
+const python = new Python(() => 0, _handler_func);
 
 function update() {
     window.location.reload();

@@ -3,8 +3,9 @@
 from autobahn.twisted.websocket import WebSocketServerProtocol
 from .config import encode
 import json
+from dataclasses import dataclass
 
-__all__ = ['expose_ws', 'peers', 'Server']
+__all__ = ['expose_ws', 'peers', 'Server', "js"]
 
 peers, functions = {}, {}
 
@@ -64,3 +65,36 @@ class Server(WebSocketServerProtocol):
         if peers.get(self.peer):
             # cleanup
             del peers[self.peer]
+
+    @property
+    def js(self):
+        return JavaScript(server=self)
+
+
+@dataclass
+class JavascriptCall:
+    func: str
+    server: Server = None
+
+    def __call__(self, data, **kwargs):
+        data = {
+            'function': self.func,
+            'data': data,
+            **kwargs
+        }
+
+        if self.server:
+            return self.server.send_client(data)
+        else:
+            return data
+
+
+@dataclass
+class JavaScript:
+    server: Server = None
+
+    def __getattr__(self, key):
+        return JavascriptCall(key, self.server)
+
+
+js = JavaScript()

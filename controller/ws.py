@@ -2,13 +2,17 @@
 
 from framework.ws import expose_ws
 
+
 # exposed at 'func'
 @expose_ws()
 def func(server, *args):
     print('Func called with', args)
-    # server.send_client({'function': 'some_js_func', 'data': 'bye'})
+    server.js.some_func('hi')
     # you can send data back with server.send_client or return
-    return {'function': 'some_js_func', 'data': 'bye'}
+
+    return {"random": "data"}
+    # return js.some_func('bye')
+    # return {'function': 'some_js_func', 'data': 'bye'}
 
 
 # exposed at 'update_all'
