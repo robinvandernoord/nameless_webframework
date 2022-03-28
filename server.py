@@ -1,6 +1,7 @@
 import sys
 
 from framework import log, WebSocketServerFactory, reactor, Server, WebSocketResource, root, Site, ssl, config
+from framework._autoreload import autoreload
 
 # import pages and endpoints:
 import controller.web
@@ -37,5 +38,9 @@ def serve(arguments):
     reactor.run()
 
 
+def main(*args):
+    autoreload(serve, args)
+
+
 if __name__ == '__main__':
-    serve(sys.argv[1:])
+    main(sys.argv[1:])
