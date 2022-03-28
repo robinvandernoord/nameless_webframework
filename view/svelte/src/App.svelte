@@ -1,4 +1,6 @@
 <script>
+    import Server from "./components/Server.svelte";
+
     export let name;
 
     let n = 0;
@@ -33,4 +35,8 @@
         <span>{n}</span>
         <button on:click={_=>n += 1}>+</button>
     </p>
+
+    <Server />
+    <Server />
+    <Server />
 </main>
