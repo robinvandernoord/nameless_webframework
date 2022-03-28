@@ -1,12 +1,14 @@
 # functions for exposing web endpoints
-
+from twisted.web.server import Request
 from twisted.web.resource import Resource
 from twisted.web.static import File
 from jinja2 import Environment, FileSystemLoader
 from .config import encode
 import json
 
-__all__ = ['expose_static', 'expose_web', 'root']
+__all__ = ['expose_static', 'expose_web', 'root', "Request", "Args"]
+
+from .injection import Inject, get_method
 
 
 def HTTP_CODE(code, message='', request=None):
@@ -30,6 +32,8 @@ class TriggerFile(File):
         self.trigger_func(*a, **kw)
         return res
 
+class Args(dict, Inject): pass
+
 
 class Template(Resource):
     def __init__(self, template, func):
@@ -38,7 +42,9 @@ class Template(Resource):
         self.function = func
 
     def render(self, request):
-        ctx = self.function(request)
+        args = Args(request.args)
+        func = get_method(self.function, [request, args])
+        ctx = func()
         ctx["__globals"] = json.dumps(ctx)
         env = Environment(loader=FileSystemLoader('view'))
         template = env.get_template(f'{self.template}.html')
@@ -76,7 +82,10 @@ def expose_static(alias=None, template=True):
 
 def _safe_execute(func, request):
     try:
-        return encode(func(request))
+        args = Args(request.args)
+        func = get_method(func, dependencies=[request, args])
+
+        return encode(func())
     except Exception as e:
         return HTTP_CODE(400, f'Something went wrong: {e}', request)
 

@@ -1,11 +1,15 @@
 # functions for exposing websocket endpoints
 
 from autobahn.twisted.websocket import WebSocketServerProtocol
+
+from . import injection
 from .config import encode
 import json
 from dataclasses import dataclass
 
-__all__ = ['expose_ws', 'peers', 'Server', "js"]
+__all__ = ['expose_ws', 'peers', 'Server', "Client", "js", 'functions']
+
+from .injection import Inject
 
 peers, functions = {}, {}
 
@@ -30,7 +34,11 @@ def expose_ws(command=None):
         return wrapper
 
 
-class Server(WebSocketServerProtocol):
+class Server(WebSocketServerProtocol, Inject):
+
+    def __init__(self):
+        self.client = Client(self)
+        super().__init__()
 
     @property
     def peers(self):
@@ -50,7 +58,11 @@ class Server(WebSocketServerProtocol):
     def _handle(self, payload):
         payload = self.payload_to_dict(payload)
         function = functions.get(payload.get('function', None), self.default_func)
-        result = function(self, payload.get('data', {}))
+
+        function = injection.get_method(function, dependencies=[self, self.client])
+
+        result = function(payload.get('data', {}))
+
         if payload.get('return'):
             # add 'return' token to response:
             if isinstance(result, dict):
@@ -107,6 +119,12 @@ class JavaScript:
 
     def __getattr__(self, key):
         return JavascriptCall(key, self.server)
+
+
+@dataclass
+class Client(JavaScript, Inject):
+    # dummy for ease of use
+    server: Server = None
 
 
 js = JavaScript()

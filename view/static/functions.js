@@ -1,8 +1,7 @@
 // example, expose JS functions here
 
 function some_func(data) {
-    console.error("hi")
-    log(data);
+    console.error(...data)
 }
 
 expose_function(some_func);
