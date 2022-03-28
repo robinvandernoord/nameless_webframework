@@ -22,6 +22,11 @@ def an_other_template(request):
     return {'some': 'other data'}
 
 
+@template(template='svelte/index')
+def svelte(request):
+    return {'name': 'Earth'}
+
+
 # you can also expose POST
 @web('get')
 def admin(request):

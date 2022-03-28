@@ -21,6 +21,11 @@ def log(server, *args):
     return {}
 
 
+@websocket
+def list_of_data(server, *args):
+    return [1, 2, 4, 56]
+
+
 # exposed at 'update_all'
 @websocket('update_all')
 def push_update(server, *a):

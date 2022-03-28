@@ -4,6 +4,7 @@ from twisted.web.resource import Resource
 from twisted.web.static import File
 from jinja2 import Environment, FileSystemLoader
 from .config import encode
+import json
 
 __all__ = ['expose_static', 'expose_web', 'root']
 
@@ -38,6 +39,7 @@ class Template(Resource):
 
     def render(self, request):
         ctx = self.function(request)
+        ctx["__globals"] = json.dumps(ctx)
         env = Environment(loader=FileSystemLoader('view'))
         template = env.get_template(f'{self.template}.html')
         output_from_parsed_template = template.render(**ctx)
@@ -56,8 +58,6 @@ def expose_static(alias=None, template=True):
                 where = alias
             else:
                 where = name
-
-            print(template, name, where)
 
             if template:
                 contents = Template(filename, func)
