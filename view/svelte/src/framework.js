@@ -1,6 +1,11 @@
 // JS functions
 
 // https://github.com/arlac77/svelte-websocket-store/blob/master/src/index.mjs#L43
+
+function now() {
+    return new Date();
+}
+
 const reopenTimeouts = [2000, 5000, 10000, 30000, 60000];
 
 let socket, openPromise, reopenTimeoutHandler;
@@ -66,37 +71,11 @@ async function open() {
 
 open();
 
-class TO_BE_FILLED_IN {
-}
-
-function promise_ws(return_id) {
-    return new Promise(function (resolve, reject) {
-        // todo: resolve callbacks differently (without interval etc.)
-
-        // executor (the producing code, "singer")
-        let i = 0;
-        const int = setInterval(function () {
-
-            if (callbacks[return_id] !== TO_BE_FILLED_IN) {
-                clearInterval(int);
-                return resolve(callbacks[return_id]);
-            } else {
-                i++;
-                if (i > 200) {
-                    clearInterval(int);
-                    return reject('timeout');
-                }
-            }
-        }, 100);
-    });
-}
-
 function send(data) {
     let guid = undefined;
     if (typeof data == 'object') {
         guid = crypto.randomUUID();
         data['return'] = guid;
-        callbacks[guid] = TO_BE_FILLED_IN;
     }
 
     const _send = () => socket.send(JSON.stringify(data));
@@ -108,7 +87,7 @@ function send(data) {
 
 // functions
 let functions = {};
-let callbacks = {};
+let promises = {};
 
 export function expose(f) {
     functions[f.name] = f;
@@ -116,19 +95,60 @@ export function expose(f) {
 
 export const expose_function = expose;
 
+function promise_ws(return_id) {
+    let _p = {
+        'created_at': now()
+    };
+
+    const p = new Promise(function (resolve, reject) {
+        _p['resolve'] = resolve;
+        _p['reject'] = reject;
+    });
+
+    _p['promise'] = p;
+
+    promises[return_id] = _p;
+    return p;
+}
+
+// 1 minute:
+const EXPIRE_PROMISES = 1000 * 60;
+
+async function cleanup_old_promises() {
+    const n = now();
+    for (let id of Object.keys(promises)) {
+        const prom = promises[id];
+
+        if (n - prom.created_at > EXPIRE_PROMISES) {
+
+            console.log('purging', id, n - prom.created_at);
+
+            delete promises[id];
+        }
+    }
+}
+
 function handle(data) {
     let response;
-
 
     try {
         response = JSON.parse(data);
 
-        if (response['return'] && callbacks[response['return']] === TO_BE_FILLED_IN) {
-            callbacks[response['return']] = response.data ?? response;
+        if (response['return']) {
+            promises[response['return']].resolve(response.data ?? response);
+
+            delete promises[response['return']];  // cleanup
         }
+
+        console.log(promises);
+
     } catch (e) {
         throw data;
+    } finally {
+        cleanup_old_promises();
     }
+
+    // if no error:
 
     if (response && response['function'] && functions[response['function']]) {
         return functions[response['function']](response.data);

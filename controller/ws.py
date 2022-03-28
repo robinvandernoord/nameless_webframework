@@ -19,12 +19,13 @@ def func(args, client: Client):
 @websocket()
 def log(args):
     print(*args)
-    return {}
+
 
 
 @websocket
-def list_of_data(_):
-    return [1, 2, 31, 4, 6]
+def list_of_data(args):
+    a = args[0] if args else 0
+    return [a, a + 1, a + 2, a * 2]
 
 
 @websocket

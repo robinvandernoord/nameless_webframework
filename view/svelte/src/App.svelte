@@ -36,7 +36,7 @@
         <button on:click={_=>n += 1}>+</button>
     </p>
 
-    <Server />
-    <Server />
-    <Server />
+    <Server {n} />
+    <Server n={n + 1} />
+    <Server n={n + 2} />
 </main>

@@ -8,9 +8,9 @@ from framework.web import Request, Args
 
 # beta will be an alias for index, index.html will be rendered
 @static('beta')
-def index(request: Request):
+def index(request: Request, args: Args):
     # because 'index' is special, this function will only be called when you visit /beta
-    print('beta called', request)
+    print('beta called', request, args)
 
 
 @template
@@ -31,11 +31,9 @@ def svelte():
 # you can also expose POST
 @web('get')
 def admin(request: Request, args: Args):
-    token = args.get(b'token')
+    token = args.get('token')
 
-    print(request.args, args, token, config.get('admintoken'))
-
-    if token and token[0] == config.get('admintoken', '').encode():
+    if token and token[0] == config.get('admintoken', ''):
         # auth
         return "you're in!"
     else:

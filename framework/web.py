@@ -22,21 +22,44 @@ def HTTP_CODE(code, message='', request=None):
 root = File("view")
 
 
-class TriggerFile(File):
+class StaticFile(File):
     def __init__(self, trigger_func, *a, **kw):
         self.trigger_func = trigger_func
         super().__init__(*a, **kw)
 
-    def render(self, *a, **kw):
-        res = super().render(*a, **kw)
-        self.trigger_func(*a, **kw)
+    def render(self, request, *a, **kw):
+        args = Args(request.args)
+        f = get_method(self.trigger_func, [request, args])
+
+        res = super().render(request)
+        f(*a, **kw)
         return res
 
-class Args(dict, Inject): pass
+
+class Args(dict, Inject):
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        self._convert()
+
+    @classmethod
+    def __convert(cls, data):
+        if isinstance(data, bytes):
+            return data.decode('ascii')
+        if isinstance(data, dict):
+            return dict(map(cls.__convert, data.items()))
+        if isinstance(data, (tuple, list)):
+            return type(data)(map(cls.__convert, data))
+
+        return data
+
+    def _convert(self):
+        new = self.__convert(self)
+        self.clear()
+        self.update(new)
 
 
 class Template(Resource):
-    def __init__(self, template, func):
+    def __init__(self, func, template):
         super().__init__()
         self.template = template
         self.function = func
@@ -58,7 +81,6 @@ def expose_static(alias=None, template=True):
             name = func.__name__
 
             filename = name if template in (True, False, None) else template
-            file = TriggerFile(func, f'view/{filename}.html')
 
             if alias and not callable(alias):
                 where = alias
@@ -66,9 +88,9 @@ def expose_static(alias=None, template=True):
                 where = name
 
             if template:
-                contents = Template(filename, func)
+                contents = Template(func, filename)
             else:
-                contents = file
+                contents = StaticFile(func, f'view/{filename}.html')
 
             root.putChild(where.encode(), contents)
 
